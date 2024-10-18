@@ -133,27 +133,56 @@ def get_content_recommendations(
 
 
 
+# def collaborative_filtering_simple(user_id, ratings_df, books_df, num_recommendations=5):
+#     # Get the books rated by the user
+#     user_ratings = ratings_df[ratings_df["user_id"] == user_id]
+    
+#     if user_ratings.empty:
+#         st.error("This user has not rated any books.")
+#         return pd.DataFrame(columns=["book_id", "title", "authors", "small_image_url"])
+
+#     # Find similar users based on ratings
+#     similar_users = ratings_df[ratings_df["book_id"].isin(user_ratings["book_id"])]
+#     recommended_books = similar_users.groupby("book_id").agg({"rating": "mean"}).reset_index()
+    
+#     # Filter out books already rated by the user
+#     recommended_books = recommended_books[~recommended_books["book_id"].isin(user_ratings["book_id"])]
+    
+#     # Get top recommendations
+#     top_recommendations = recommended_books.sort_values(by="rating", ascending=False).head(num_recommendations)
+
+#     # Merge with books_df to get book details
+#     recommendations = books_df[books_df["book_id"].isin(top_recommendations["book_id"])]
+#     return recommendations[["book_id", "title", "authors", "small_image_url"]]
+
+from sklearn.neighbors import NearestNeighbors
+
 def collaborative_filtering_simple(user_id, ratings_df, books_df, num_recommendations=5):
-    # Get the books rated by the user
     user_ratings = ratings_df[ratings_df["user_id"] == user_id]
     
     if user_ratings.empty:
-        st.error("This user has not rated any books.")
-        return pd.DataFrame(columns=["book_id", "title", "authors", "small_image_url"])
+        print(f"No ratings found for User ID {user_id}")
+        return pd.DataFrame()
 
-    # Find similar users based on ratings
-    similar_users = ratings_df[ratings_df["book_id"].isin(user_ratings["book_id"])]
-    recommended_books = similar_users.groupby("book_id").agg({"rating": "mean"}).reset_index()
+    # Get the book IDs the user has rated
+    book_ids = user_ratings["book_id"].values.reshape(-1, 1)
     
-    # Filter out books already rated by the user
-    recommended_books = recommended_books[~recommended_books["book_id"].isin(user_ratings["book_id"])]
-    
-    # Get top recommendations
-    top_recommendations = recommended_books.sort_values(by="rating", ascending=False).head(num_recommendations)
+    if len(book_ids) == 0:
+        print("No book IDs found for this user")
+        return pd.DataFrame()
 
-    # Merge with books_df to get book details
-    recommendations = books_df[books_df["book_id"].isin(top_recommendations["book_id"])]
-    return recommendations[["book_id", "title", "authors", "small_image_url"]]
+    # Fit a NearestNeighbors model on book IDs (or more sophisticated data if available)
+    model_knn = NearestNeighbors(metric='cosine', algorithm='auto')
+    model_knn.fit(book_ids)
+    
+    # Find the nearest neighbors
+    distances, indices = model_knn.kneighbors(book_ids, n_neighbors=num_recommendations)
+    
+    # Get the recommended books from the indices
+    recommended_books = books_df.iloc[indices.flatten()]
+    
+    return recommended_books[["book_id", "title", "authors", "small_image_url"]]
+
 
 
 
