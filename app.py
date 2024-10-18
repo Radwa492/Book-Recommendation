@@ -207,7 +207,9 @@ elif recommendation_method == "Content-Based":
 elif recommendation_method == "Collaborative Filtering":
     st.header("👥 Collaborative Filtering Recommendations")
     user_id = st.number_input("Enter your User ID:", min_value=1, step=1)
+    user_id = int(user_id)
     num_recommend = st.slider("Number of recommendations:", 1, 20, 5)
+    num_recommend = int(num_recommend)
 
     if st.button("Show Recommendations"):
         if user_id not in ratings_df["user_id"].unique():
