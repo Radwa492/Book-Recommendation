@@ -5,5 +5,5 @@ scikit-learn==1.5.2
 scikit-surprise==1.1.4
 joblib==1.4.2
 gdown==5.2.0
-cython==3.0.44
+cython
 streamlit==1.39.0
