@@ -1,11 +1,12 @@
 # Main libraries for data manipulation and machine learning
-numpy
+numpy==1.19.5
 pandas
 scikit_learn
 scikit-surprise
-joblib
+joblib==1.2.0
 gdown
 cython
+scipy==1.6.0
 
 # Web application framework
 streamlit
