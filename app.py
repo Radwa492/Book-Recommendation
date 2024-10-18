@@ -128,7 +128,7 @@ def get_content_recommendations(
 
 
 
-svd_model = joblib.load('model.h5')
+svd_model = joblib.load('svd_model.h5')
 
 
 def recommend_collaborative(
