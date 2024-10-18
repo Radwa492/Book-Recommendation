@@ -1,7 +1,7 @@
 
 import streamlit as st
 import pandas as pd
-from scikit.surprise import SVD, Dataset, Reader
+from surprise import SVD, Dataset, Reader
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from surprise.model_selection import train_test_split, cross_validate
