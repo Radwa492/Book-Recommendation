@@ -1,9 +1,7 @@
 # Main libraries for data manipulation and machine learning
-numpy==2.1.2
-pandas==2.2.3
-scikit-learn==1.5.2
-scikit-surprise==1.1.4
-joblib==1.4.2
-gdown==5.2.0
-cython
-streamlit==1.39.0
+numpy
+pandas
+scikit-learn
+joblib
+gdown
+streamlit
