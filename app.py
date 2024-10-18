@@ -210,7 +210,7 @@ elif recommendation_method == "Collaborative Filtering":
     user_id = int(user_id)
     num_recommend = st.slider("Number of recommendations:", 1, 20, 5)
     num_recommend = int(num_recommend)
-
+    st.write(ratings_df.head())
     if st.button("Show Recommendations"):
         if user_id not in ratings_df["user_id"].unique():
             st.error("User ID not found. Please enter a valid User ID.")
