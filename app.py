@@ -133,21 +133,47 @@ svd_model = joblib.load('svd_model.h5')
 
 
 def recommend_collaborative(
-    user_id, ratings_df, books_df, svd_model, num_recommendations=5
+    user_id, ratings_df, books_df, train_matrix, svd_model, num_recommendations=5
 ):
+    # All book IDs in the dataset
     all_book_ids = books_df["book_id"].unique()
+
+    # Books already rated by the user
     rated_books = ratings_df[ratings_df["user_id"] == user_id]["book_id"].tolist()
-    books_to_predict = [book for book in all_book_ids if book not in rated_books]
-    predictions = [svd_model.predict(user_id, book_id) for book_id in books_to_predict]
-    pred_df = pd.DataFrame(
-        {
-            "book_id": books_to_predict,
-            "predicted_rating": [pred.est for pred in predictions],
-        }
-    )
+
+    # Books the user hasn't rated yet
+    books_to_predict = [book_id for book_id in all_book_ids if book_id not in rated_books]
+
+    # Ensure the user exists in the training data, otherwise we need to handle new users
+    if user_id not in train_matrix.index:
+        print(f"User {user_id} not found in the training set.")
+        return pd.DataFrame(columns=["book_id", "title", "authors", "small_image_url"])
+
+    # Get the latent features of the user (U)
+    user_index = train_matrix.index.get_loc(user_id)  # Get index of the user in the train matrix
+    user_features = svd_model.transform(train_matrix)[user_index, :]
+
+    # Get the Vt matrix (item latent features)
+    Vt = svd_model.components_
+
+    # Predict the ratings for all books the user hasn't rated
+    predictions = []
+    for book_id in books_to_predict:
+        if book_id in train_matrix.columns:
+            book_index = train_matrix.columns.get_loc(book_id)
+            predicted_rating = np.dot(user_features, Vt[:, book_index])
+            predictions.append((book_id, predicted_rating))
+
+    # Create a DataFrame for the predictions
+    pred_df = pd.DataFrame(predictions, columns=["book_id", "predicted_rating"])
+
+    # Sort the predictions by rating in descending order and get the top recommendations
     pred_df = pred_df.sort_values("predicted_rating", ascending=False)
     top_recommendations = pred_df.head(num_recommendations)
+
+    # Merge with books_df to get book details
     recommended_books = top_recommendations.merge(books_df, on="book_id")
+
     return recommended_books[["book_id", "title", "authors", "small_image_url"]]
 
 
