@@ -5,6 +5,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.model_selection import train_test_split, cross_validate
 from sklearn.decomposition import TruncatedSVD
+from sklearn.neighbors import NearestNeighbors
 
 import joblib
 import gdown
@@ -128,55 +129,33 @@ def get_content_recommendations(
 # ------------------------------
 
 # Create a user-item matrix (train_matrix)
-train_matrix = ratings_df.pivot(index='user_id', columns='book_id', values='rating').fillna(0)
 
 
-svd_model = joblib.load('svd_model.h5')
 
 
-def recommend_collaborative(
-    user_id, ratings_df, books_df, train_matrix, svd_model, num_recommendations=5
-):
-    # All book IDs in the dataset
-    all_book_ids = books_df["book_id"].unique()
+# Define the collaborative_knn function
+def collaborative_knn(user_id, ratings_df, books_df, num_recommendations=5):
+    user_ratings = ratings_df[ratings_df["user_id"] == user_id]
+    # Create a user-item matrix
+    train_matrix = ratings_df.pivot(index='user_id', columns='book_id', values='rating').fillna(0)
+    
+    # Fit the KNN model
+    model_knn = NearestNeighbors(metric='cosine', algorithm='auto')
+    model_knn.fit(train_matrix)
 
-    # Books already rated by the user
-    rated_books = ratings_df[ratings_df["user_id"] == user_id]["book_id"].tolist()
-
-    # Books the user hasn't rated yet
-    books_to_predict = [book_id for book_id in all_book_ids if book_id not in rated_books]
-
-    # Ensure the user exists in the training data, otherwise we need to handle new users
-    if user_id not in train_matrix.index:
-        print(f"User {user_id} not found in the training set.")
-        return pd.DataFrame(columns=["book_id", "title", "authors", "small_image_url"])
-
-    # Get the latent features of the user (U)
-    user_index = train_matrix.index.get_loc(user_id)  # Get index of the user in the train matrix
-    user_features = svd_model.transform(train_matrix)[user_index, :]
-
-    # Get the Vt matrix (item latent features)
-    Vt = svd_model.components_
-
-    # Predict the ratings for all books the user hasn't rated
-    predictions = []
-    for book_id in books_to_predict:
-        if book_id in train_matrix.columns:
-            book_index = train_matrix.columns.get_loc(book_id)
-            predicted_rating = np.dot(user_features, Vt[:, book_index])
-            predictions.append((book_id, predicted_rating))
-
-    # Create a DataFrame for the predictions
-    pred_df = pd.DataFrame(predictions, columns=["book_id", "predicted_rating"])
-
-    # Sort the predictions by rating in descending order and get the top recommendations
-    pred_df = pred_df.sort_values("predicted_rating", ascending=False)
-    top_recommendations = pred_df.head(num_recommendations)
+    # Get the user's ratings and predict
+    user_vector = train_matrix.loc[user_id].values.reshape(1, -1)
+    distances, indices = model_knn.kneighbors(user_vector, n_neighbors=num_recommendations+1)
+    
+    # Get book recommendations
+    recommended_books = []
+    for index in indices.flatten()[1:]:  # Skip the first index since it's the user itself
+        book_id = train_matrix.columns[index]
+        recommended_books.append(book_id)
 
     # Merge with books_df to get book details
-    recommended_books = top_recommendations.merge(books_df, on="book_id")
-
-    return recommended_books[["book_id", "title", "authors", "small_image_url"]]
+    recommendations = books_df[books_df["book_id"].isin(recommended_books)]
+    return recommendations[["book_id", "title", "authors", "small_image_url"]]
 
 
 # ------------------------------
@@ -229,19 +208,18 @@ elif recommendation_method == "Collaborative Filtering":
     st.header("👥 Collaborative Filtering Recommendations")
     user_id = st.number_input("Enter your User ID:", min_value=1, step=1)
     num_recommend = st.slider("Number of recommendations:", 1, 20, 5)
+
     if st.button("Show Recommendations"):
         if user_id not in ratings_df["user_id"].unique():
             st.error("User ID not found. Please enter a valid User ID.")
         else:
-            train_matrix = ratings_df.pivot(index='user_id', columns='book_id', values='rating').fillna(0)
-            recommended_books = recommend_collaborative(
-                user_id,
-                ratings_df,
-                books_df,
-                train_matrix,
-                svd_model,
+            recommended_books = collaborative_knn(
+                user_id=user_id,
+                ratings_df=ratings_df,
+                books_df=books_df,
                 num_recommendations=num_recommend,
             )
+
             if not recommended_books.empty:
                 for index, row in recommended_books.iterrows():
                     st.image(row["small_image_url"], width=100)
