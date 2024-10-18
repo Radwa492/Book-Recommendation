@@ -210,14 +210,11 @@ elif recommendation_method == "Collaborative Filtering":
     user_id = int(user_id)
     num_recommend = st.slider("Number of recommendations:", 1, 20, 5)
     num_recommend = int(num_recommend)
-    st.write(ratings_df.head())
     if st.button("Show Recommendations"):
         if user_id not in ratings_df["user_id"].unique():
             st.error("User ID not found. Please enter a valid User ID.")
         else:
             recommended_books = collaborative_filtering_simple(user_id=user_id, ratings_df=ratings_df, books_df=books_df, num_recommendations=num_recommend)
-
-
             if not recommended_books.empty:
                 for index, row in recommended_books.iterrows():
                     st.image(row["small_image_url"], width=100)
