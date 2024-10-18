@@ -234,11 +234,11 @@ elif recommendation_method == "Collaborative Filtering":
             st.error("User ID not found. Please enter a valid User ID.")
         else:
             recommended_books = recommend_collaborative(
-                user_id,
-                ratings_df,
-                books_df,
-                train_matrix
-                svd_model,
+                user_id=user_id,
+                ratings_df=ratings_df,
+                books_df=books_df,
+                train_matrix=train_matrix,  # This is the added train_matrix
+                svd_model=svd_model,
                 num_recommendations=num_recommend,
             )
             if not recommended_books.empty:
