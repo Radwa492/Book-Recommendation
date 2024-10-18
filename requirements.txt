@@ -2,6 +2,6 @@ gdown==5.2.0
 pandas==2.2.3
 scikit_learn==1.5.2
 streamlit==1.39.0
-surprise==0.1
+scikit-surprise==1.1.0
 numpy>=1.19.3,<2
 joblib==1.3.2
