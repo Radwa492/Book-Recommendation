@@ -155,8 +155,6 @@ def collaborative_filtering_simple(user_id, ratings_df, books_df, num_recommenda
     recommendations = books_df[books_df["book_id"].isin(top_recommendations["book_id"])]
     return recommendations[["book_id", "title", "authors", "small_image_url"]]
 
-# Replace the previous collaborative filtering call with this one
-recommended_books = collaborative_filtering_simple(user_id=user_id, ratings_df=ratings_df, books_df=books_df, num_recommendations=num_recommend)
 
 
 
