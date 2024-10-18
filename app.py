@@ -127,6 +127,8 @@ def get_content_recommendations(
 # Collaborative Filtering
 # ------------------------------
 
+# Create a user-item matrix (train_matrix)
+train_matrix = ratings_df.pivot(index='user_id', columns='book_id', values='rating').fillna(0)
 
 
 svd_model = joblib.load('svd_model.h5')
@@ -235,6 +237,7 @@ elif recommendation_method == "Collaborative Filtering":
                 user_id,
                 ratings_df,
                 books_df,
+                train_matrix
                 svd_model,
                 num_recommendations=num_recommend,
             )
