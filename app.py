@@ -233,12 +233,13 @@ elif recommendation_method == "Collaborative Filtering":
         if user_id not in ratings_df["user_id"].unique():
             st.error("User ID not found. Please enter a valid User ID.")
         else:
+            train_matrix = ratings_df.pivot(index='user_id', columns='book_id', values='rating').fillna(0)
             recommended_books = recommend_collaborative(
-                user_id=user_id,
-                ratings_df=ratings_df,
-                books_df=books_df,
-                train_matrix=train_matrix,  # This is the added train_matrix
-                svd_model=svd_model,
+                user_id,
+                ratings_df,
+                books_df,
+                train_matrix,
+                svd_model,
                 num_recommendations=num_recommend,
             )
             if not recommended_books.empty:
