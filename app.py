@@ -133,29 +133,31 @@ def get_content_recommendations(
 
 
 
-# Define the collaborative_knn function
-def collaborative_knn(user_id, ratings_df, books_df, num_recommendations=5):
+def collaborative_filtering_simple(user_id, ratings_df, books_df, num_recommendations=5):
+    # Get the books rated by the user
     user_ratings = ratings_df[ratings_df["user_id"] == user_id]
-    # Create a user-item matrix
-    train_matrix = ratings_df.pivot(index='user_id', columns='book_id', values='rating').fillna(0)
     
-    # Fit the KNN model
-    model_knn = NearestNeighbors(metric='cosine', algorithm='auto')
-    model_knn.fit(train_matrix)
+    if user_ratings.empty:
+        st.error("This user has not rated any books.")
+        return pd.DataFrame(columns=["book_id", "title", "authors", "small_image_url"])
 
-    # Get the user's ratings and predict
-    user_vector = train_matrix.loc[user_id].values.reshape(1, -1)
-    distances, indices = model_knn.kneighbors(user_vector, n_neighbors=num_recommendations+1)
+    # Find similar users based on ratings
+    similar_users = ratings_df[ratings_df["book_id"].isin(user_ratings["book_id"])]
+    recommended_books = similar_users.groupby("book_id").agg({"rating": "mean"}).reset_index()
     
-    # Get book recommendations
-    recommended_books = []
-    for index in indices.flatten()[1:]:  # Skip the first index since it's the user itself
-        book_id = train_matrix.columns[index]
-        recommended_books.append(book_id)
+    # Filter out books already rated by the user
+    recommended_books = recommended_books[~recommended_books["book_id"].isin(user_ratings["book_id"])]
+    
+    # Get top recommendations
+    top_recommendations = recommended_books.sort_values(by="rating", ascending=False).head(num_recommendations)
 
     # Merge with books_df to get book details
-    recommendations = books_df[books_df["book_id"].isin(recommended_books)]
+    recommendations = books_df[books_df["book_id"].isin(top_recommendations["book_id"])]
     return recommendations[["book_id", "title", "authors", "small_image_url"]]
+
+# Replace the previous collaborative filtering call with this one
+recommended_books = collaborative_filtering_simple(user_id=user_id, ratings_df=ratings_df, books_df=books_df, num_recommendations=num_recommend)
+
 
 
 # ------------------------------
@@ -213,12 +215,8 @@ elif recommendation_method == "Collaborative Filtering":
         if user_id not in ratings_df["user_id"].unique():
             st.error("User ID not found. Please enter a valid User ID.")
         else:
-            recommended_books = collaborative_knn(
-                user_id=user_id,
-                ratings_df=ratings_df,
-                books_df=books_df,
-                num_recommendations=num_recommend,
-            )
+            recommended_books = collaborative_filtering_simple(user_id=user_id, ratings_df=ratings_df, books_df=books_df, num_recommendations=num_recommend)
+
 
             if not recommended_books.empty:
                 for index, row in recommended_books.iterrows():
