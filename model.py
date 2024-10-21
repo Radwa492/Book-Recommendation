@@ -44,6 +44,25 @@ def preprocess_books(books_df):
     
     return books_df
 
+def popularity_recommendations(books_df, ratings_df, num_recommendations, metric='average_rating'):
+    if metric == 'average_rating':
+        popular_books = ratings_df.groupby('book_id').agg({'rating': 'mean'}).rename(columns={'rating': 'average_rating'})
+        popular_books = popular_books.merge(books_df, on='book_id').sort_values('average_rating', ascending=False)
+    elif metric == 'ratings_count':
+        popular_books = ratings_df.groupby('book_id').agg({'rating': 'count'}).rename(columns={'rating': 'ratings_count'})
+        popular_books = popular_books.merge(books_df, on='book_id').sort_values('ratings_count', ascending=False)
+    elif metric == 'weighted_score':
+        C = ratings_df['rating'].mean()
+        m = ratings_df['book_id'].value_counts().quantile(0.9)
+        q_books = ratings_df.groupby('book_id').agg(average_rating=('rating', 'mean'), ratings_count=('rating', 'count'))
+        q_books = q_books[q_books['ratings_count'] >= m]
+        q_books['weighted_score'] = (q_books['average_rating'] * q_books['ratings_count'] + C * m) / (q_books['ratings_count'] + m)
+        popular_books = q_books.merge(books_df, on='book_id').sort_values('weighted_score', ascending=False)
+    else:
+        raise ValueError("Metric not recognized. Choose from 'average_rating', 'ratings_count', 'weighted_score'")
+    popular_books.columns = popular_books.columns.str.replace('_x', '', regex=True).str.replace('_y', '', regex=True)
+    return popular_books.head(num_recommendations)
+
 def content_based_model(books_df):
     books_df = preprocess_books(books_df)
     tfidf = TfidfVectorizer(stop_words='english')
