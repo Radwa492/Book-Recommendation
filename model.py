@@ -14,6 +14,9 @@ nltk_data_dir = '/content/nltk_data'
 os.makedirs(nltk_data_dir, exist_ok=True)
 nltk.data.path.append(nltk_data_dir)
 
+nltk_data_dir = './nltk_data'  # Use a local directory
+os.makedirs(nltk_data_dir, exist_ok=True)
+
 # Download necessary NLTK resources
 nltk.download('punkt', download_dir=nltk_data_dir)
 nltk.download('stopwords', download_dir=nltk_data_dir)
