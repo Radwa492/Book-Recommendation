@@ -4,9 +4,13 @@ import pandas as pd
 from PIL import Image
 from model import popularity_recommendations, content_based, hybrid_recommendations, train_svd_model, content_based_model
 
-# Load the datasets
-books_df = pd.read_csv("/content/drive/MyDrive/Copy_of_cleaned_books_data.csv")
-ratings_df = pd.read_csv("/content/drive/MyDrive/ratings.csv")
+@st.cache
+def load_data():
+    books_df = pd.read_csv("/content/drive/MyDrive/Copy_of_cleaned_books_data.csv")
+    ratings_df = pd.read_csv("/content/drive/MyDrive/ratings.csv")
+    return books_df, ratings_df
+
+books_df, ratings_df = load_data()
 
 # Load models and data
 cosine_sim, indices = content_based_model(books_df)
