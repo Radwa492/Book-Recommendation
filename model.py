@@ -1,37 +1,33 @@
 import pandas as pd
 import re
-import nltk
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.neighbors import NearestNeighbors
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-from nltk.stem import WordNetLemmatizer
-import os
 
-# Set NLTK data directory
-nltk_data_dir = '/content/nltk_data'
-os.makedirs(nltk_data_dir, exist_ok=True)
-nltk.data.path.append(nltk_data_dir)
-
-nltk_data_dir = './nltk_data'  # Use a local directory
-os.makedirs(nltk_data_dir, exist_ok=True)
-
-# Download necessary NLTK resources
-nltk.download('punkt', download_dir=nltk_data_dir)
-nltk.download('stopwords', download_dir=nltk_data_dir)
-nltk.download('wordnet', download_dir=nltk_data_dir)
-
-# Initialize the lemmatizer
-lemmatizer = WordNetLemmatizer()
+# Define a simple list of stopwords
+stop_words = set([
+    "i", "me", "my", "myself", "we", "our", "ours", "ourselves", "you", "your", 
+    "yours", "yourself", "yourselves", "he", "him", "his", "himself", "she", 
+    "her", "hers", "herself", "it", "its", "itself", "they", "them", "their", 
+    "theirs", "themselves", "what", "which", "who", "whom", "this", "that", 
+    "these", "those", "am", "is", "are", "was", "were", "be", "been", "being", 
+    "have", "has", "had", "having", "do", "does", "did", "doing", "a", "an", 
+    "the", "and", "but", "if", "or", "because", "as", "until", "while", "of", 
+    "at", "by", "for", "with", "about", "against", "between", "into", "through", 
+    "during", "before", "after", "above", "below", "to", "from", "up", "down", 
+    "in", "out", "on", "off", "over", "under", "again", "further", "then", 
+    "once", "here", "there", "when", "where", "why", "how", "all", "any", 
+    "both", "each", "few", "more", "most", "other", "some", "such", "no", 
+    "nor", "not", "only", "own", "same", "so", "than", "too", "very", 
+    "s", "t", "can", "will", "just", "don", "should", "now"
+])
 
 # Preprocess functions
 def preprocess_text(text):
     text = text.lower()
     text = re.sub(r'[^\w\s]', '', text)
-    tokens = word_tokenize(text)
-    tokens = [word for word in tokens if word not in stopwords.words('english')]
-    tokens = [lemmatizer.lemmatize(word) for word in tokens]
+    tokens = re.findall(r'\w+', text)  # Simple tokenization
+    tokens = [word for word in tokens if word not in stop_words]
     return ' '.join(tokens)
 
 def preprocess_genres(genres):
