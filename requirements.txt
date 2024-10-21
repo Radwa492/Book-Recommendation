@@ -1,12 +1,3 @@
-# Main libraries for data manipulation and machine learning
-numpy
-pandas
-scikit-learn
-joblib
-gdown
-streamlit
-nltk
-surprise
 -i https://pypi.org/simple
 altair==5.1.1 ; python_version >= '3.8'
 attrs==23.1.0 ; python_version >= '3.7'
