@@ -9,6 +9,8 @@ your_project/
 
 ├── requirements.txt
 
-└── data/
+└── data
+/
     ├── cleaned_books_data.csv
     └── ratings.csv
+    
