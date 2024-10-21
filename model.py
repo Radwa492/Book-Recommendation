@@ -1,33 +1,35 @@
 import pandas as pd
 import re
+import nltk
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.neighbors import NearestNeighbors
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+import os
+import gdown
 
-# Define a simple list of stopwords
-stop_words = set([
-    "i", "me", "my", "myself", "we", "our", "ours", "ourselves", "you", "your", 
-    "yours", "yourself", "yourselves", "he", "him", "his", "himself", "she", 
-    "her", "hers", "herself", "it", "its", "itself", "they", "them", "their", 
-    "theirs", "themselves", "what", "which", "who", "whom", "this", "that", 
-    "these", "those", "am", "is", "are", "was", "were", "be", "been", "being", 
-    "have", "has", "had", "having", "do", "does", "did", "doing", "a", "an", 
-    "the", "and", "but", "if", "or", "because", "as", "until", "while", "of", 
-    "at", "by", "for", "with", "about", "against", "between", "into", "through", 
-    "during", "before", "after", "above", "below", "to", "from", "up", "down", 
-    "in", "out", "on", "off", "over", "under", "again", "further", "then", 
-    "once", "here", "there", "when", "where", "why", "how", "all", "any", 
-    "both", "each", "few", "more", "most", "other", "some", "such", "no", 
-    "nor", "not", "only", "own", "same", "so", "than", "too", "very", 
-    "s", "t", "can", "will", "just", "don", "should", "now"
-])
+# Set NLTK data directory
+nltk_data_dir = './nltk_data'  # Use a local directory
+os.makedirs(nltk_data_dir, exist_ok=True)
+nltk.data.path.append(nltk_data_dir)
+
+# Download necessary NLTK resources
+nltk.download('punkt', download_dir=nltk_data_dir)
+nltk.download('stopwords', download_dir=nltk_data_dir)
+nltk.download('wordnet', download_dir=nltk_data_dir)
+
+# Initialize the lemmatizer
+lemmatizer = WordNetLemmatizer()
 
 # Preprocess functions
 def preprocess_text(text):
     text = text.lower()
     text = re.sub(r'[^\w\s]', '', text)
-    tokens = re.findall(r'\w+', text)  # Simple tokenization
-    tokens = [word for word in tokens if word not in stop_words]
+    tokens = word_tokenize(text)
+    tokens = [word for word in tokens if word not in stopwords.words('english')]
+    tokens = [lemmatizer.lemmatize(word) for word in tokens]
     return ' '.join(tokens)
 
 def preprocess_genres(genres):
@@ -43,25 +45,6 @@ def preprocess_books(books_df):
     books_df['content'] = books_df['description'] + ' ' + books_df['genres'] + ' ' + books_df['authors']
     
     return books_df
-
-def popularity_recommendations(books_df, ratings_df, num_recommendations, metric='average_rating'):
-    if metric == 'average_rating':
-        popular_books = ratings_df.groupby('book_id').agg({'rating': 'mean'}).rename(columns={'rating': 'average_rating'})
-        popular_books = popular_books.merge(books_df, on='book_id').sort_values('average_rating', ascending=False)
-    elif metric == 'ratings_count':
-        popular_books = ratings_df.groupby('book_id').agg({'rating': 'count'}).rename(columns={'rating': 'ratings_count'})
-        popular_books = popular_books.merge(books_df, on='book_id').sort_values('ratings_count', ascending=False)
-    elif metric == 'weighted_score':
-        C = ratings_df['rating'].mean()
-        m = ratings_df['book_id'].value_counts().quantile(0.9)
-        q_books = ratings_df.groupby('book_id').agg(average_rating=('rating', 'mean'), ratings_count=('rating', 'count'))
-        q_books = q_books[q_books['ratings_count'] >= m]
-        q_books['weighted_score'] = (q_books['average_rating'] * q_books['ratings_count'] + C * m) / (q_books['ratings_count'] + m)
-        popular_books = q_books.merge(books_df, on='book_id').sort_values('weighted_score', ascending=False)
-    else:
-        raise ValueError("Metric not recognized. Choose from 'average_rating', 'ratings_count', 'weighted_score'")
-    popular_books.columns = popular_books.columns.str.replace('_x', '', regex=True).str.replace('_y', '', regex=True)
-    return popular_books.head(num_recommendations)
 
 def content_based_model(books_df):
     books_df = preprocess_books(books_df)
