@@ -26,9 +26,8 @@ stop_words = set([
 def preprocess_text(text):
     text = text.lower()
     text = re.sub(r'[^\w\s]', '', text)
-    tokens = word_tokenize(text)
-    tokens = [word for word in tokens if word not in stopwords.words('english')]
-    tokens = [lemmatizer.lemmatize(word) for word in tokens]
+    tokens = re.findall(r'\w+', text)  # Simple tokenization
+    tokens = [word for word in tokens if word not in stop_words]
     return ' '.join(tokens)
 
 def preprocess_genres(genres):
@@ -44,7 +43,6 @@ def preprocess_books(books_df):
     books_df['content'] = books_df['description'] + ' ' + books_df['genres'] + ' ' + books_df['authors']
     
     return books_df
-
 def content_based_model(books_df):
     books_df = preprocess_books(books_df)
     tfidf = TfidfVectorizer(stop_words='english')
