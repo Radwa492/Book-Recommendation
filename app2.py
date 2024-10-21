@@ -6,8 +6,8 @@ from model import popularity_recommendations, content_based, hybrid_recommendati
 
 @st.cache
 def load_data():
-    books_df = pd.read_csv("/content/drive/MyDrive/Copy_of_cleaned_books_data.csv")
-    ratings_df = pd.read_csv("/content/drive/MyDrive/ratings.csv")
+    books_df = pd.read_csv("https://raw.githubusercontent.com/Radwa492/Book-Recommendation/refs/heads/master/cleaned_books_data.csv")
+    ratings_df = pd.read_csv("https://raw.githubusercontent.com/Radwa492/Book-Recommendation/refs/heads/master/ratings.csv")
     return books_df, ratings_df
 
 books_df, ratings_df = load_data()
