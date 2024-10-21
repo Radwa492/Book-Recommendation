@@ -2,7 +2,7 @@
 import streamlit as st
 import pandas as pd
 from PIL import Image
-from model import popularity_recommendations, content_based, hybrid_recommendations, train_svd_model, content_based_model
+from model import popularity_recommendations, content_based, hybrid_recommendations, train_knn_model, content_based_model
 
 @st.cache
 def load_data():
