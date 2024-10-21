@@ -1,20 +1,31 @@
-# app.py
 import streamlit as st
 import pandas as pd
 from PIL import Image
 from model import popularity_recommendations, content_based, hybrid_recommendations, train_knn_model, content_based_model
+import gdown
+
+# Function to download file from Google Drive
+def download_file(file_id, output):
+    url = f"https://drive.google.com/uc?id={file_id}"
+    gdown.download(url, output, quiet=False)
+    return output
 
 @st.cache
 def load_data():
     books_df = pd.read_csv("https://raw.githubusercontent.com/Radwa492/Book-Recommendation/refs/heads/master/cleaned_books_data.csv")
-    ratings_df = pd.read_csv("https://raw.githubusercontent.com/Radwa492/Book-Recommendation/refs/heads/master/ratings.csv")
+    
+    # Download the ratings file from Google Drive
+    ratings_file_id = "1BBWxMFF60ZVUfIU8bMuDNU1d93wWMXyi"
+    ratings_file_path = download_file(ratings_file_id, "ratings.csv")
+    ratings_df = pd.read_csv(ratings_file_path)
+    
     return books_df, ratings_df
 
 books_df, ratings_df = load_data()
 
 # Load models and data
 cosine_sim, indices = content_based_model(books_df)
-svd_model = train_svd_model(ratings_df)
+knn_model, pivot_table = train_knn_model(ratings_df)
 
 # Sidebar for navigation
 st.sidebar.title("Navigation")
@@ -63,7 +74,7 @@ elif page == "Book Search":
         
         # Button to get content-based recommendations
         if st.button("Recommend Similar Books"):
-            recommendations, scores = content_based(selected_book, books_df)
+            recommendations, scores = content_based(selected_book, books_df, cosine_sim, indices)
             st.write("### Recommended Books:")
             for i, (index, row) in enumerate(recommendations.iterrows()):
                 st.write(f"{i+1}. {row['title']} by {row['authors']}")
@@ -78,7 +89,7 @@ elif page == "User Recommendations":
         st.write(f"Getting recommendations for User ID: {user_id}")
         
         # Get hybrid recommendations for the user
-        hybrid_recommendations_list = hybrid_recommendations(user_id, books_df, ratings_df, svd_model, num_recommendations=10)
+        hybrid_recommendations_list = hybrid_recommendations(user_id, books_df, ratings_df, knn_model, pivot_table, num_recommendations=10)
         
         # Display recommendations
         st.write("### Recommended Books:")
